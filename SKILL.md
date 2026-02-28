@@ -54,15 +54,44 @@ Task: "Research the top AI agent frameworks"
 
 ---
 
-## Two modes — choose based on the task
+## Three modes — auto-routed by intent
+
+**You don't need to say which mode.** Just describe the task. The skill reads these two signals:
+
+1. **Need web search / real-time info?** → use sessions_spawn (has tools)
+2. **Want multiple draft versions to compare?** → spawn parallel writers
 
 ```
-Does the task need web search / file I/O / code execution?
-  YES → 🎯 Orchestrator Mode  (sessions_spawn, full tools)
-  NO  → 🔄 Pipeline Mode      (run.py, pure text, faster)
+User says anything
+        ↓
+  Wants multiple versions / drafts / angles?
+        YES ──→ Also needs web search?
+        │              YES → 🔀 Hybrid Mode   (search first, then N drafts)
+        │              NO  → 🔄 Pipeline Mode (N drafts in parallel, pure text)
+        │
+        NO  ──→ Needs web search / file ops?
+                       YES → 🎯 Orchestrator Mode (sessions_spawn, parallel)
+                       NO  → 🔄 Pipeline Mode     (pure text, faster)
 ```
 
-Both modes support any number of agents. Both can run in parallel or sequential.
+**Trigger signals the skill listens for:**
+
+| Signal | Examples | Mode triggered |
+|--------|---------|---------------|
+| Multi-draft intent | "几个版本", "多个角度", "让我挑", "各自写", "different styles" | Pipeline or Hybrid |
+| Search intent | "搜索", "最新", "调研", "联网", "search", "latest" | Orchestrator or Hybrid |
+| Both | "搜索后给我几版报告", "research then write multiple drafts" | **Hybrid** |
+| Neither | "翻译", "分析", "写作", plain text tasks | Pipeline |
+
+You can also check with the router directly:
+```bash
+python scripts/router.py mode "搜索竞品资料，帮我写3个版本的分析"
+# → 🔀 HYBRID
+python scripts/router.py mode "调研LangChain并写一份报告"
+# → 🎯 ORCHESTRATOR
+python scripts/router.py mode "用三个角度分析这个方案"
+# → 🔄 PIPELINE
+```
 
 ---
 
@@ -167,6 +196,50 @@ python run.py --dry-run \
 - Multi-model comparison (same task, different models)
 - Code pipeline (plan → code → review)
 - Batch writing (translate/summarize N documents in parallel)
+
+---
+
+## 🔀 Hybrid Mode (search + multi-draft)
+
+Best of both worlds: sub-agents search the web (with tools), then multiple writers generate parallel drafts from the research.
+
+**When it kicks in:** user wants both real-time research AND multiple versions to compare.
+
+```
+Phase 1 (Orchestrator — with tools, parallel):
+  sessions_spawn(search topic A) ──┐
+  sessions_spawn(search topic B) ──┤ → all run simultaneously
+  sessions_spawn(search topic C) ──┘
+  ↓ research summaries collected
+
+Phase 2 (Pipeline — pure text, parallel):
+  openclaw agent (writer style 1) ──┐
+  openclaw agent (writer style 2) ──┤ → all run simultaneously
+  openclaw agent (writer style 3) ──┘
+  ↓ 3 draft versions returned
+
+Main agent: compare drafts → pick best or synthesize
+```
+
+**CLI usage:**
+```bash
+# Auto: router detects hybrid intent and runs both phases
+python run.py --mode hybrid --task "调研主流AI框架，给我3个不同风格的对比报告" --num-drafts 3
+
+# Auto-mode: let router decide the mode automatically
+python run.py --auto-mode --task "搜索竞品资料后写几个版本的分析"
+```
+
+**In conversation (sessions_spawn approach):**
+```python
+# Phase 1: parallel research (spawn all at once)
+sessions_spawn({"task": "[CONTEXT] ...\n\n[TASK] Search LangChain. 5 bullets.", "label": "🔍 research-langchain"})
+sessions_spawn({"task": "[CONTEXT] ...\n\n[TASK] Search CrewAI. 5 bullets.", "label": "🔍 research-crewai"})
+sessions_spawn({"task": "[CONTEXT] ...\n\n[TASK] Search AutoGen. 5 bullets.", "label": "🔍 research-autogen"})
+
+# After all 3 return → Phase 2: main agent writes 3 draft versions itself
+# (or spawn 3 pipeline agents with research as context)
+```
 
 ---
 

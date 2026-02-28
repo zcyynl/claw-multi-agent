@@ -342,6 +342,78 @@ class SwarmEngine:
 
         return results
 
+    def run_hybrid(
+        self,
+        research_tasks: List[AgentTask],
+        draft_task_template: str,
+        num_drafts: int = 3,
+        draft_models: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        混合模式：先并行搜索（依赖外部指挥官），再流水线并行生成多版草稿
+
+        Phase 1: 并行执行 research_tasks（搜索/调研）
+        Phase 2: 把 Phase 1 结果注入 context，并行生成 num_drafts 版草稿
+
+        Args:
+            research_tasks: Phase 1 调研任务列表
+            draft_task_template: Phase 2 草稿任务模板，用 {research} 占位符注入调研结果
+            num_drafts: Phase 2 草稿数量（默认 3）
+            draft_models: Phase 2 每个草稿使用的模型列表（默认都用 default）
+
+        Returns:
+            {"research_results": [...], "draft_results": [...], "stats": {...}}
+        """
+        logger.info(f"🔀 混合模式启动: {len(research_tasks)} 调研任务 → {num_drafts} 版草稿")
+
+        # Phase 1: 并行调研
+        logger.info("📡 Phase 1: 并行调研中...")
+        research_results = self.run_parallel(research_tasks)
+
+        # 聚合调研结果
+        research_summary = "\n\n".join([
+            f"[{r.label}] {r.output}"
+            for r in research_results if r.success
+        ])
+
+        if not research_summary:
+            logger.warning("Phase 1 调研全部失败，跳过 Phase 2")
+            return {
+                "research_results": research_results,
+                "draft_results": [],
+                "stats": {"phase1_ok": 0, "phase2_ok": 0},
+            }
+
+        # Phase 2: 并行生成多版草稿
+        logger.info(f"✍️  Phase 2: 并行生成 {num_drafts} 版草稿...")
+        if draft_models is None:
+            draft_models = ["default"] * num_drafts
+
+        draft_tasks = []
+        for i in range(num_drafts):
+            model = draft_models[i] if i < len(draft_models) else "default"
+            task_text = draft_task_template.format(research=research_summary)
+            draft_tasks.append(AgentTask(
+                task=task_text,
+                model=model,
+                role="writer",
+                label=f"draft_{i+1}",
+                timeout=300,
+            ))
+
+        draft_results = self.run_parallel(draft_tasks)
+
+        return {
+            "research_results": research_results,
+            "draft_results": draft_results,
+            "stats": {
+                "phase1_ok": sum(1 for r in research_results if r.success),
+                "phase1_total": len(research_results),
+                "phase2_ok": sum(1 for r in draft_results if r.success),
+                "phase2_total": len(draft_results),
+            },
+        }
+
     def aggregate(
         self,
         results: List[AgentResult],

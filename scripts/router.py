@@ -17,6 +17,38 @@ MAX_TASK_LENGTH = 10000
 
 
 # Tier 定义和关键词映射
+# 混合模式触发信号词：用户想要多版本草稿/多角度对比
+HYBRID_SIGNALS = [
+    # 中文
+    "几个版本", "多个版本", "多版本", "多个草稿", "多版草稿",
+    "3个版本", "三个版本", "2个版本", "两个版本", "4个版本", "四个版本",
+    "几个角度", "多个角度", "不同角度", "不同风格", "多种风格",
+    "让我挑", "帮我挑", "我来选", "我来挑", "哪个更好",
+    "对比几种", "对比几个写法", "ab对比", "a/b对比",
+    "不同模型各自", "让不同ai", "让几个ai", "多个模型",
+    "各写一版", "各自写", "分别写",
+    "几种写法", "多种写法", "不同写法",
+    # 英文
+    "multiple versions", "several versions", "multi-version",
+    "multiple drafts", "different angles", "different styles",
+    "let me pick", "let me choose", "a/b test", "ab test",
+    "compare versions", "compare drafts", "side by side",
+    "each model", "different models", "multiple models",
+    "3 versions", "3 drafts", "several drafts",
+]
+
+# 联网需求信号词：判断是否需要 sessions_spawn（指挥官/混合）
+SEARCH_SIGNALS = [
+    # 中文
+    "搜索", "搜一下", "查一下", "联网", "最新", "现在", "今天",
+    "最近", "实时", "新闻", "当前", "查找资料", "调研", "研究",
+    "查资料", "找资料", "爬", "抓取",
+    # 英文
+    "search", "look up", "latest", "current", "real-time", "recent",
+    "news", "find information", "research", "scrape", "fetch",
+    "web", "internet", "online",
+]
+
 TIER_KEYWORDS: Dict[str, Dict] = {
     "FAST": {
         "description": "简单查询、列表、状态检查、翻译、格式转换",
@@ -257,6 +289,64 @@ class TaskRouter:
 
         return subtasks if subtasks else [task]
 
+    def detect_hybrid_intent(self, task: str) -> bool:
+        """
+        检测用户是否有「多版本草稿」意图（触发混合模式）
+        """
+        task_lower = task.lower()
+        for signal in HYBRID_SIGNALS:
+            if signal.lower() in task_lower:
+                return True
+        return False
+
+    def detect_search_intent(self, task: str) -> bool:
+        """
+        检测用户是否需要联网搜索（触发指挥官/混合模式）
+        """
+        task_lower = task.lower()
+        for signal in SEARCH_SIGNALS:
+            if signal.lower() in task_lower:
+                return True
+        return False
+
+    def recommend_mode(self, task: str) -> Dict:
+        """
+        根据任务内容推荐执行模式
+
+        决策树：
+          需要多版本？
+            YES + 需要联网 → hybrid（混合）
+            YES + 不需联网 → pipeline（流水线）
+            NO  + 需要联网 → orchestrator（指挥官）
+            NO  + 不需联网 → pipeline（流水线）
+
+        Returns:
+            {"mode": str, "needs_search": bool, "needs_multi_draft": bool, "reason": str}
+        """
+        self._validate_task(task)
+        needs_search = self.detect_search_intent(task)
+        needs_multi_draft = self.detect_hybrid_intent(task)
+
+        if needs_multi_draft and needs_search:
+            mode = "hybrid"
+            reason = "需要联网搜索 + 多版本草稿对比 → 混合模式（先指挥官搜索，再流水线并行生成）"
+        elif needs_multi_draft:
+            mode = "pipeline"
+            reason = "需要多版本草稿对比，无需联网 → 流水线模式（并行生成多版）"
+        elif needs_search:
+            mode = "orchestrator"
+            reason = "需要联网搜索，只要一份结果 → 指挥官模式（sessions_spawn 并行）"
+        else:
+            mode = "pipeline"
+            reason = "纯文本任务，无需联网 → 流水线模式"
+
+        return {
+            "mode": mode,
+            "needs_search": needs_search,
+            "needs_multi_draft": needs_multi_draft,
+            "reason": reason,
+        }
+
     def spawn(self, task: str, multi: bool = False) -> List[SpawnTask]:
         """
         生成任务配置
@@ -307,6 +397,14 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
+    # mode 命令（推荐执行模式）
+    mode_parser = subparsers.add_parser(
+        "mode",
+        help="推荐执行模式：orchestrator / pipeline / hybrid"
+    )
+    mode_parser.add_argument("task", help="任务描述字符串")
+    mode_parser.add_argument("--json", action="store_true", help="以 JSON 格式输出")
+
     # classify 命令
     classify_parser = subparsers.add_parser(
         "classify",
@@ -351,7 +449,18 @@ def main():
     router = TaskRouter()
 
     try:
-        if args.command == "classify":
+        if args.command == "mode":
+            result = router.recommend_mode(args.task)
+            if args.json:
+                print(json.dumps(result, ensure_ascii=False))
+            else:
+                mode_emoji = {"orchestrator": "🎯", "pipeline": "🔄", "hybrid": "🔀"}.get(result["mode"], "❓")
+                print(f"推荐模式: {mode_emoji} {result['mode'].upper()}")
+                print(f"需要联网: {'✅' if result['needs_search'] else '❌'}")
+                print(f"多版草稿: {'✅' if result['needs_multi_draft'] else '❌'}")
+                print(f"原因: {result['reason']}")
+
+        elif args.command == "classify":
             result = router.classify(args.task)
             if args.json:
                 print(json.dumps(asdict(result), ensure_ascii=False))

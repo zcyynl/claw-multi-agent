@@ -137,8 +137,12 @@ def main():
 """
     )
     parser.add_argument("--task", help="主任务描述")
-    parser.add_argument("--mode", choices=["parallel", "sequential"], default="parallel",
-                        help="执行模式：parallel（并行）或 sequential（串行）")
+    parser.add_argument("--mode", choices=["parallel", "sequential", "hybrid"], default="parallel",
+                        help="执行模式：parallel（并行）/ sequential（串行）/ hybrid（混合：先搜索后多版草稿）")
+    parser.add_argument("--auto-mode", action="store_true",
+                        help="根据任务内容自动选择模式（orchestrator/pipeline/hybrid）")
+    parser.add_argument("--num-drafts", type=int, default=3,
+                        help="混合模式：生成草稿版本数（默认3）")
     parser.add_argument("--agents", nargs="+", metavar="model:role:task",
                         help="Agent 定义，格式：model:role:task")
     parser.add_argument("--config", help="JSON pipeline 配置文件路径")
@@ -208,6 +212,17 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    # --auto-mode：根据任务内容自动选择模式
+    if args.auto_mode and args.task:
+        from scripts.router import TaskRouter
+        router = TaskRouter()
+        rec = router.recommend_mode(args.task)
+        mode_map = {"orchestrator": "parallel", "pipeline": "parallel", "hybrid": "hybrid"}
+        args.mode = mode_map.get(rec["mode"], "parallel")
+        mode_emoji = {"orchestrator": "🎯", "pipeline": "🔄", "hybrid": "🔀"}.get(rec["mode"], "")
+        print(f"\n🧭 自动模式选择: {mode_emoji} {rec['mode'].upper()}")
+        print(f"   原因: {rec['reason']}\n")
+
     # 构建任务列表
     tasks: List[AgentTask] = []
     if args.agents:
@@ -228,13 +243,69 @@ def main():
     print(f"\n{'='*60}")
     print("🐝 OpenClaw Agent Swarm")
     print(f"{'='*60}")
+
+    start = time.time()
+
+    # 混合模式
+    if args.mode == "hybrid":
+        if not args.task:
+            print("❌ 混合模式需要 --task 参数（作为草稿生成的主题）")
+            sys.exit(1)
+
+        print(f"模式: 🔀 hybrid | 调研任务: {len(tasks)} | 草稿数: {args.num_drafts}")
+        print(f"{'='*60}\n")
+
+        # research tasks = 用户传入的 --agents（或单 task）
+        research_tasks = tasks if tasks else [AgentTask(
+            task=f"搜索和整理关于以下主题的资料：{args.task}",
+            label="researcher_1", timeout=args.timeout
+        )]
+
+        # 草稿模板
+        draft_template = (
+            "以下是调研结果：\n\n{research}\n\n"
+            f"请基于以上资料，撰写一篇关于「{args.task}」的完整文章/报告。"
+            "要求：结构清晰，语言流畅，有观点有数据。"
+        )
+
+        hybrid_result = engine.run_hybrid(
+            research_tasks=research_tasks,
+            draft_task_template=draft_template,
+            num_drafts=args.num_drafts,
+        )
+
+        stats = hybrid_result["stats"]
+        print(f"\n{'='*60}")
+        print("📡 Phase 1 调研结果")
+        print(f"{'='*60}")
+        research_agg = engine.aggregate(
+            hybrid_result["research_results"],
+            mode="concatenate",
+            original_task=args.task
+        )
+        print(research_agg)
+        engine.print_stats(hybrid_result["research_results"])
+
+        print(f"\n{'='*60}")
+        print(f"✍️  Phase 2 草稿对比（共 {stats['phase2_ok']}/{stats['phase2_total']} 版）")
+        print(f"{'='*60}")
+        draft_agg = engine.aggregate(
+            hybrid_result["draft_results"],
+            mode="compare",
+            original_task=args.task
+        )
+        print(draft_agg)
+        engine.print_stats(hybrid_result["draft_results"])
+
+        print(f"\n总耗时（挂钟时间）: {time.time() - start:.1f}s")
+        return
+
+    # 普通模式（parallel / sequential）
     print(f"模式: {args.mode} | 并发: {args.max_concurrent} | 聚合: {args.aggregation}")
     print(f"任务数: {len(tasks)}")
     for t in tasks:
         print(f"  [{t.label}] model={t.model} | {t.task[:50]}...")
     print(f"{'='*60}\n")
-
-    start = time.time()
 
     if args.mode == "parallel":
         results = engine.run_parallel(tasks)
