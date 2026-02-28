@@ -77,13 +77,21 @@ After spawning, say one line:
 ⏳ 子 Agent 已全部出发，等结果回来...
 ```
 
-### After results — structured summary (not raw dump)
+### After results — structured output (not raw dump)
 
-**Never paste sub-agent raw output directly.** Always digest and present:
+**Never paste sub-agent raw output directly.** Always digest and restructure by content logic — NOT by agent order.
+
+**Output order (mandatory):**
 
 ```
-✅ 调研完成！3 个 Agent 并行，耗时约 XX 秒。
+1. 执行统计卡 ← 先让用户知道跑了什么
+2. 核心结论（3-5条最重要发现）← 最有价值的放最前面
+3. 分主题展开细节（按内容逻辑组织，不按子Agent顺序）← 读起来是一篇完整文章
+4. 下一步行动建议 ← 落地结尾
+```
 
+**统计卡格式：**
+```
 ## 📊 执行统计
 | Agent | 模型 | 耗时 | 状态 |
 |-------|------|------|------|
@@ -91,13 +99,54 @@ After spawning, say one line:
 | 🔍 研究员B | GLM | 62s | ✅ |
 | 📊 分析师  | Kimi | 45s | ✅ |
 串行需要约 165s → 并行实际 62s，节省 **62%** ⚡
-
----
-
-[主 Agent 自己消化、整合后的报告内容]
 ```
 
-**The main agent writes the report in its own words.** Sub-agent outputs are source material, not the final answer.
+**❌ Wrong — agent order:**
+```
+子Agent1的结果...
+子Agent2的结果...
+子Agent3的结果...  ← 读者要自己拼图，体验差
+```
+
+**✅ Right — content logic:**
+```
+## 核心结论
+1. 最重要发现A（来自多个Agent综合）
+2. 最重要发现B
+...
+
+## 详细分析：[主题1]
+...（整合所有相关Agent的内容）
+
+## 详细分析：[主题2]
+...
+
+## 下一步建议
+...
+```
+
+**The main agent rewrites everything in its own words.** Sub-agent outputs are raw material, not the final answer.
+
+### After results — always save a report file
+
+**For any research / analysis task, always save results to a file automatically — don't ask.**
+
+```python
+# Default path pattern:
+/workspace/projects/{topic-slug}/report.md
+
+# Always tell the user where it's saved:
+"✅ 完整报告已保存至：/workspace/projects/clawexp-research/report.md"
+
+# Then offer (don't ask whether to generate):
+"需要推送到飞书文档吗？"
+```
+
+**Rules:**
+- ✅ Research / analysis tasks → **always** save `.md` file, tell user the path
+- ✅ End with "需要推送到飞书文档吗？" (one line, not a paragraph)
+- ❌ Never ask "要不要我帮你整理成文档？" — just do it
+- ❌ Never ask "需要我生成报告吗？" — already done
 
 ---
 
