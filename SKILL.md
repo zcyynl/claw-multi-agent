@@ -136,7 +136,8 @@ After spawning, say one line:
 write("/workspace/projects/{topic-slug}/report.md", content)
 
 # Step 2: Send as file attachment (not just path, not just text content)
-message(action="send", channel="feishu", filePath="/workspace/projects/{topic-slug}/report.md", message="📄 调研报告：{topic}")
+# Do NOT hardcode channel — omit it to auto-route to the user's current channel
+message(action="send", filePath="/workspace/projects/{topic-slug}/report.md", message="📄 调研报告：{topic}")
 
 # Step 3: One line at the end in your reply:
 "需要推送到飞书文档吗？"
