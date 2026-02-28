@@ -66,14 +66,32 @@ Both modes support any number of agents. Both can run in parallel or sequential.
 
 ---
 
-## 🎯 Orchestrator Mode (with tools)
+## 🎯 Orchestrator Mode (with tools, truly parallel)
 
 Sub-agents launched via `sessions_spawn`. Each has full OpenClaw tools: web search, file read/write, code execution.
+
+**⚡ How parallelism works:**
+Call multiple `sessions_spawn` in the **same tool-call round** — OpenClaw executes them simultaneously. All sub-agents run at once; the main agent collects all results when they finish.
+
+```
+Same round → parallel execution:
+
+sessions_spawn(task="Search LangChain...") ──┐
+sessions_spawn(task="Search CrewAI...")    ──┤→ all run simultaneously
+sessions_spawn(task="Search AutoGen...")   ──┘
+sessions_spawn(task="Search LangGraph...") ─┘
+
+↓  (all finish, main agent receives all 4 results)
+
+Main agent consolidates → writes full report
+```
+
+**Sequential = spawn one, wait for result, then spawn next.** Use this only when a later task depends on an earlier result (e.g. write report AFTER research is done).
 
 **How to spawn — always include role, model hint, and what to return:**
 
 ```python
-# Plan first: task has 4 dimensions → spawn 4 researchers + 1 analyst
+# Parallel research: spawn all 4 in the same round → they run simultaneously
 sessions_spawn({
     "task": "[CONTEXT] Comparing AI agent frameworks for a tech team report.\n\n[YOUR TASK] Search LangChain: architecture, pros/cons, GitHub stars, latest version. Return 5 bullet points ≤100 words each. Do NOT write a full report.",
     "label": "🔍 researcher-langchain [model: default]"
@@ -90,10 +108,23 @@ sessions_spawn({
     "task": "[CONTEXT] Same report.\n\n[YOUR TASK] Search LangGraph: architecture, pros/cons, GitHub stars, latest version. Return 5 bullet points ≤100 words each.",
     "label": "🔍 researcher-langgraph [model: default]"
 })
-# After all 4 return → main agent consolidates and writes report
+# All 4 run in parallel → when all return, main agent consolidates and writes report
+```
+
+**Mixed: parallel then sequential** (most common pattern):
+```python
+# Phase 1: parallel research (spawn all at once)
+sessions_spawn({"task": "[CONTEXT] ...\n\n[TASK] Search LangChain. 5 bullets ≤100 words.", "label": "🔍 researcher-langchain"})
+sessions_spawn({"task": "[CONTEXT] ...\n\n[TASK] Search CrewAI. 5 bullets ≤100 words.", "label": "🔍 researcher-crewai"})
+sessions_spawn({"task": "[CONTEXT] ...\n\n[TASK] Search AutoGen. 5 bullets ≤100 words.", "label": "🔍 researcher-autogen"})
+
+# Phase 2: after all 3 return → main agent writes report (sequential, depends on research)
+# (main agent does this directly, no need to spawn a writer)
 ```
 
 **Key rules:**
+- ✅ **Same round = parallel**: spawn multiple agents at once for independent tasks
+- ✅ **Sequential**: spawn one, wait for result, then spawn next — only when tasks depend on each other
 - ✅ Sub-agents return **summaries only** (≤100 words per point)
 - ✅ Main agent **writes the full report** (avoids token limit failures)
 - ✅ Label each agent clearly: role + what model it's using

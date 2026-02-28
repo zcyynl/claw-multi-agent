@@ -32,14 +32,22 @@ sessions_spawn → 派一个子 Agent → 等它完成 → 再派下一个
 
 ## 两种模式的区别
 
-### 🎯 指挥官模式 — 子 Agent 有工具，能联网
+### 🎯 指挥官模式 — 子 Agent 有工具，能联网，真并行
 
 子 Agent 通过 `sessions_spawn` 派发，**每个子 Agent 都有完整工具**：
 - 能 `web_search` 联网搜索
 - 能 `read` / `write` 操作文件
 - 能 `exec` 执行代码
 
-**限制**：子 Agent 之间仍是串行等待（原生 sessions_spawn 限制）
+**并行原理**：在同一轮工具调用里批量发出多个 `sessions_spawn`，OpenClaw 会同时执行它们，全部完成后主 Agent 统一收结果。
+
+```
+同一轮发出：
+  sessions_spawn(搜索LangChain) ──┐
+  sessions_spawn(搜索CrewAI)   ──┤→ 同时跑
+  sessions_spawn(搜索AutoGen)  ──┘
+↓ 全部返回后，主 Agent 整合写报告
+```
 
 适合：**需要真实联网搜索、文件读写的任务**
 
