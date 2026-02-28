@@ -4,47 +4,87 @@
 
 ---
 
-## 为什么需要多智能体？
+## OpenClaw 原生能力 vs claw-multi-agent
 
-OpenClaw 默认是**单 Agent 串行**工作：一个问题问完等回答，再问下一个。
+> 先说清楚原生有什么、我们加了什么。
 
-这带来三个问题：
+**OpenClaw 原生**只有一种多 Agent 能力：`sessions_spawn`
 
-- ⏱ **慢**：3 个调研任务要等 3 倍时间
-- 🧠 **上下文污染**：所有中间过程都堆在同一个会话里，越跑越慢越贵
-- 🎯 **视角单一**：一个 AI 做所有事，容易有盲区
+```
+sessions_spawn → 派一个子 Agent → 等它完成 → 再派下一个
+```
 
-**claw-multi-agent 解决这三个问题：**
+- ✅ 子 Agent 有完整工具（联网搜索、读写文件、执行代码）
+- ❌ **只能串行**：等一个完成才能派下一个
+- ❌ 没有并行机制，没有批量调度，没有结果自动聚合
 
-| 问题 | 解决方式 | 效果 |
-|------|----------|------|
-| 慢 | 多个 Agent 同时跑 | **节省 50-67% 时间** ⚡ |
-| 上下文污染 | 每个子 Agent 独立会话，只返回摘要 | **主线程 token 消耗降低 60-80%** 💰 |
-| 视角单一 | 不同 Agent 专注不同子任务 | **结果更全面、更专业** 🎯 |
+**claw-multi-agent 加了什么：**
+
+| 能力 | 原生 OpenClaw | claw-multi-agent |
+|------|--------------|-----------------|
+| 派子 Agent | ✅ sessions_spawn（串行） | ✅ 指挥官模式（继承并优化） |
+| **真并行多 Agent** | ❌ | ✅ 流水线模式（CLI 并行） |
+| 结果自动聚合 | ❌ | ✅ |
+| 任务类型自动路由 | ❌ | ✅ router.py |
+| **无工具轻量 Agent**（省 token） | ❌ | ✅ 流水线模式 |
 
 ---
 
-## 能做什么？
+## 两种模式的区别
+
+### 🎯 指挥官模式 — 子 Agent 有工具，能联网
+
+子 Agent 通过 `sessions_spawn` 派发，**每个子 Agent 都有完整工具**：
+- 能 `web_search` 联网搜索
+- 能 `read` / `write` 操作文件
+- 能 `exec` 执行代码
+
+**限制**：子 Agent 之间仍是串行等待（原生 sessions_spawn 限制）
+
+适合：**需要真实联网搜索、文件读写的任务**
+
+---
+
+### 🔄 流水线模式 — 真并行，无工具，纯文本
+
+通过 OpenClaw CLI 调度多个独立 Agent 会话，**真正同时并行运行**：
 
 ```
-你说：帮我调研 LangChain、CrewAI、AutoGen 三个框架
-
-普通 OpenClaw（串行）：
-  搜索 LangChain... 等待 25s
-  搜索 CrewAI...    等待 25s   → 共 75s，上下文越来越长
-  搜索 AutoGen...   等待 25s
-
-claw-multi-agent（并行）：
-  ┌── 🔍 Agent-1 搜索 LangChain ──┐
-  ├── 🔍 Agent-2 搜索 CrewAI    ──┤ → 同时跑，共 25s
-  └── 🔍 Agent-3 搜索 AutoGen  ──┘
-  主 Agent 整合 → 写完整报告
+3 个 Agent 同时启动 → 同时跑 → 同时返回结果
+串行 75s → 并行 25s，节省 67%
 ```
 
-**实测数据**：
+**限制**：子 Agent **没有工具**，只能基于自身知识回答，不能联网
+
+适合：
+- 多模型对比（同一问题让 3 个 AI 各自回答，看谁更好）
+- 基于已有知识的写作、分析、翻译
+- 快速生成多个角度的草稿
+- 不需要实时信息的任务
+
+```bash
+cd ~/.openclaw/skills/claw-multi-agent
+
+# 3 个 Agent 并行分析同一问题的不同角度
+python run.py --mode parallel \
+  --agents "default:技术专家:从技术角度分析 LangChain 的优缺点" \
+           "default:产品经理:从产品角度分析 LangChain 的优缺点" \
+           "default:初学者:从易用性角度分析 LangChain 的优缺点"
+
+# 自动路由：路由器自动拆任务
+python run.py --auto-route --task "对比分析三个框架的设计思路"
+
+# 预览模式：只看会执行什么，不实际运行
+python run.py --dry-run --agents "default:研究员:分析X" "default:写作者:写报告"
+```
+
+---
+
+## 实测数据
 
 | 场景 | 串行 | 并行 | 节省 |
 |------|------|------|------|
+| 2 个主题同时分析 | ~13s | ~7s | **46%** ⚡ |
 | 3 个主题同时调研 | ~75s | ~25s | **67%** ⚡ |
 | 5 个 Agent 对比分析 | ~125s | ~28s | **78%** ⚡ |
 
@@ -62,47 +102,19 @@ npx --yes skills add https://github.com/zcyynl/claw-multi-agent
 
 ## 快速上手
 
-安装后直接说：
+安装后直接对话：
 
-- "帮我并行调研 LangChain、CrewAI、AutoGen 三个框架"
-- "让多个 Agent 同时搜索这几个主题，然后整合报告"
-- "用 multi-agent 模式对比几个方案的优缺点"
+- "帮我并行分析 LangChain 和 CrewAI 各自的优缺点"
+- "用 multi-agent 模式让多个角色同时分析这个方案"
+- "让 3 个 AI 同时写这篇文案，我挑最好的"
 
----
-
-## 两种工作模式
-
-### 🎯 指挥官模式（能联网 + 有工具）
-
-主 Agent 通过 `sessions_spawn` 派发子 Agent，子 Agent 拥有联网搜索、读写文件、执行代码等完整工具。
-
-适合：**需要真实搜索、文件操作的任务**
-
-### 🔄 流水线模式（纯文本，极速并行）
-
-```bash
-cd ~/.openclaw/skills/claw-multi-agent
-
-# 并行：多个 Agent 同时回答
-python run.py --mode parallel \
-  --agents "fast:研究员:调研LangChain的核心特性" \
-           "fast:研究员:调研CrewAI的核心特性" \
-           "smart:写作者:整合报告"
-
-# 自动路由：让路由器自动拆任务、分配模型
-python run.py --auto-route --task "调研三个AI框架并写对比报告"
-
-# 预览模式：只看会执行什么，不实际运行
-python run.py --dry-run --agents "fast:研究员:调研X" "smart:写作者:写报告"
-```
-
-适合：**纯文本生成、多模型对比、写作分析**
+如果需要**联网搜索最新信息**，说明需要指挥官模式，主 Agent 会自动用 sessions_spawn 串行派发。
 
 ---
 
 ## 内置智能路由
 
-自动分析任务类型，派给最合适的 Agent：
+自动分析任务类型，选择合适的执行方式：
 
 ```bash
 python scripts/router.py classify "写一个 Python 爬虫"
