@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OpenClaw Native Agent Swarm Engine
+OpenClaw Native Multi-Agent Engine
 通过 OpenClaw CLI 实现真正的多 Agent 并行编排
 
 不需要任何 API key，直接复用 OpenClaw 内部模型路由。
@@ -22,7 +22,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
-logger = logging.getLogger("swarm")
+logger = logging.getLogger("multiagent")
 
 
 # 模型别名映射
@@ -153,9 +153,9 @@ class OrchestratorGuide:
         print("详见 SKILL.md 中的「指挥官模式」章节")
 
 
-class SwarmEngine:
+class MultiAgentEngine:
     """
-    OpenClaw 原生 Swarm 引擎
+    OpenClaw 原生 Multi-Agent 引擎
     
     通过 `openclaw agent` CLI 并行触发多个 Agent，
     收集结果后进行聚合输出。
@@ -474,7 +474,7 @@ class SwarmEngine:
         max_time = max(r.execution_time for r in results) if results else 0
 
         print("\n" + "=" * 60)
-        print("📊 Swarm 执行统计")
+        print("📊 Multi-Agent 执行统计")
         print("=" * 60)
         print(f"{'Agent':<20} {'模型':<15} {'状态':<6} {'耗时':>6}")
         print("-" * 60)

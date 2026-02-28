@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OpenClaw Agent Swarm - 智能任务路由器
+OpenClaw Multi-Agent - 智能任务路由器
 根据任务内容自动判断任务类型并推荐模型 tier
 """
 
@@ -380,7 +380,7 @@ class TaskRouter:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="OpenClaw Agent Swarm - 智能任务路由器",
+        description="OpenClaw Multi-Agent - 智能任务路由器",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:

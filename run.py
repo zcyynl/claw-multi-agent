@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OpenClaw Agent Swarm - CLI 入口
+OpenClaw Multi-Agent - CLI 入口
 
 用法：
   python run.py --task "调研主流AI框架" --mode parallel \
@@ -19,7 +19,7 @@ import os
 import time
 from typing import List
 
-from swarm_engine import SwarmEngine, AgentTask, MODEL_ALIASES, OrchestratorGuide
+from swarm_engine import MultiAgentEngine, AgentTask, MODEL_ALIASES, OrchestratorGuide
 
 
 def parse_agent_str(s: str) -> AgentTask:
@@ -42,7 +42,7 @@ def load_pipeline(config_path: str) -> dict:
         return json.load(f)
 
 
-def run_pipeline(config: dict, engine: SwarmEngine) -> None:
+def run_pipeline(config: dict, engine: MultiAgentEngine) -> None:
     """执行 JSON 配置的 pipeline"""
     print(f"\n🚀 Pipeline: {config.get('name', '未命名')}")
     print(f"   {config.get('description', '')}\n")
@@ -93,7 +93,7 @@ def run_pipeline(config: dict, engine: SwarmEngine) -> None:
 
 def run_demo():
     """演示模式：展示 Swarm 的工作流程，不实际调用 openclaw"""
-    print("\n🐝 OpenClaw Agent Swarm - 演示模式\n")
+    print("\n🐝 OpenClaw Multi-Agent - 演示模式\n")
     print("（真实运行时，以下每个任务都会通过 openclaw agent CLI 并行执行）\n")
 
     tasks = [
@@ -117,7 +117,7 @@ def run_demo():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="OpenClaw Native Agent Swarm",
+        description="OpenClaw Native Multi-Agent",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -196,7 +196,7 @@ def main():
         run_demo()
         return
 
-    engine = SwarmEngine(
+    engine = MultiAgentEngine(
         max_concurrent=args.max_concurrent,
         continue_on_error=True
     )
@@ -241,7 +241,7 @@ def main():
         ))
 
     print(f"\n{'='*60}")
-    print("🐝 OpenClaw Agent Swarm")
+    print("🐝 OpenClaw Multi-Agent")
     print(f"{'='*60}")
 
     start = time.time()
