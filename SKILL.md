@@ -1,6 +1,6 @@
 ---
 name: claw-multi-agent
-description: Multi-agent parallel orchestration for OpenClaw. Spawn AI agents as a team — parallel research, multi-model comparison, code pipelines. Proven 50-65% time savings. Trigger words: multi-agent, parallel agents, swarm, spawn multiple agents, parallel research, compare models.
+description: Multi-agent parallel orchestration for OpenClaw. Spawn AI agents as a team — parallel research, multi-model comparison, code pipelines. Proven 50-65% time savings. Trigger words: multi-agent, parallel agents, swarm, spawn multiple agents, parallel research, compare models, deep research, comprehensive research, detailed investigation, thorough analysis, research multiple topics, 多智能体, 多个Agent, 并行调研, 并行搜索, 同时搜索, 同时调研, 深度调研, 详细调研, 全面调研, 深度研究, 详细检索, 多角度分析, 全面分析, 多个模型, 让多个AI, 分别搜索, 同时搜索, 组建团队, Agent小队, 多Agent.
 ---
 
 # claw-multi-agent 🐝
@@ -33,11 +33,22 @@ Just say something like:
 
 ## 🎭 Interaction Style — How to Talk to the User
 
-**This is mandatory.** Every multi-agent run must follow this interaction pattern:
+**This is mandatory.** Every multi-agent run must follow this interaction pattern.
+
+### Step 0 — Announce skill activation FIRST
+
+The very first thing to say when this skill is triggered — before any planning or spawning:
+
+```
+🐝 **claw-multi-agent 已唤醒**
+多智能体并行模式启动，我来组建 Agent 小队处理这个任务。
+```
+
+This tells the user the skill is active and sets expectations for what's about to happen.
 
 ### Before spawning — announce the plan
 
-Always say what you're about to do BEFORE calling sessions_spawn. Format:
+Right after the activation announcement, present the plan BEFORE calling sessions_spawn:
 
 ```
 🚀 收到！我来组建一个 Agent 小队并行搞定这个任务。
