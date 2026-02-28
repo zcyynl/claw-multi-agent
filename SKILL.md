@@ -127,27 +127,28 @@ After spawning, say one line:
 
 **The main agent rewrites everything in its own words.** Sub-agent outputs are raw material, not the final answer.
 
-### After results — save report and send to user
+### After results — save report and send as file attachment
 
-**For any research / analysis task: save the file AND send the content to the user. Don't just tell the path.**
+**For any research / analysis task: save the file, then send it as a file attachment via message tool.**
 
 ```python
 # Step 1: Save to file
-/workspace/projects/{topic-slug}/report.md
+write("/workspace/projects/{topic-slug}/report.md", content)
 
-# Step 2: Send the full markdown content directly in the reply
-# (User is in Feishu/chat — they can't open server paths)
+# Step 2: Send as file attachment (not just path, not just text content)
+message(action="send", channel="feishu", filePath="/workspace/projects/{topic-slug}/report.md", message="📄 调研报告：{topic}")
 
-# Step 3: One line at the end:
+# Step 3: One line at the end in your reply:
 "需要推送到飞书文档吗？"
 ```
 
 **Rules:**
 - ✅ Always save `.md` file to `/workspace/projects/{topic}/report.md`
-- ✅ Always send the **full report content** in the reply (not just the path)
+- ✅ Always **send the file as attachment** using `message` tool with `filePath`
 - ✅ End with one line: "需要推送到飞书文档吗？"
-- ❌ Never just say "报告已保存至 /path/xxx" and stop — user can't open that
+- ❌ Never just say "报告已保存至 /path/xxx" — user can't open server paths
 - ❌ Never ask "要不要我帮你整理成文档？" — just do it
+- ❌ Don't paste the entire markdown content as text — send the file instead
 
 ### Sequential vs parallel — analyst must wait for researchers
 
