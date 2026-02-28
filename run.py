@@ -19,7 +19,7 @@ import os
 import time
 from typing import List
 
-from swarm_engine import MultiAgentEngine, AgentTask, MODEL_ALIASES, OrchestratorGuide
+from multiagent_engine import MultiAgentEngine, AgentTask, MODEL_ALIASES, OrchestratorGuide
 
 
 def parse_agent_str(s: str) -> AgentTask:
@@ -160,10 +160,10 @@ def main():
     args = parser.parse_args()
 
     # 导入 OrchestratorGuide 用于指南和模板功能
-    from swarm_engine import OrchestratorGuide
+    from multiagent_engine import OrchestratorGuide
 
     if args.list_models:
-        from swarm_engine import ROLE_MODEL_MAP
+        from multiagent_engine import ROLE_MODEL_MAP
         print("\n📋 可用模型别名（来自 models.yml）:")
         for alias, model_id in MODEL_ALIASES.items():
             print(f"  {alias:<14} → {model_id}")

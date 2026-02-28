@@ -19,7 +19,7 @@ import argparse
 from typing import Optional
 
 
-# 预设角色定义（与 swarm_engine.py 中的 OrchestratorGuide 保持一致）
+# 预设角色定义（与 multiagent_engine.py 中的 OrchestratorGuide 保持一致）
 PRESETS = {
     "planner": {
         "model": "glm",
