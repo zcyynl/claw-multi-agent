@@ -127,26 +127,45 @@ After spawning, say one line:
 
 **The main agent rewrites everything in its own words.** Sub-agent outputs are raw material, not the final answer.
 
-### After results — always save a report file
+### After results — save report and send to user
 
-**For any research / analysis task, always save results to a file automatically — don't ask.**
+**For any research / analysis task: save the file AND send the content to the user. Don't just tell the path.**
 
 ```python
-# Default path pattern:
+# Step 1: Save to file
 /workspace/projects/{topic-slug}/report.md
 
-# Always tell the user where it's saved:
-"✅ 完整报告已保存至：/workspace/projects/clawexp-research/report.md"
+# Step 2: Send the full markdown content directly in the reply
+# (User is in Feishu/chat — they can't open server paths)
 
-# Then offer (don't ask whether to generate):
+# Step 3: One line at the end:
 "需要推送到飞书文档吗？"
 ```
 
 **Rules:**
-- ✅ Research / analysis tasks → **always** save `.md` file, tell user the path
-- ✅ End with "需要推送到飞书文档吗？" (one line, not a paragraph)
+- ✅ Always save `.md` file to `/workspace/projects/{topic}/report.md`
+- ✅ Always send the **full report content** in the reply (not just the path)
+- ✅ End with one line: "需要推送到飞书文档吗？"
+- ❌ Never just say "报告已保存至 /path/xxx" and stop — user can't open that
 - ❌ Never ask "要不要我帮你整理成文档？" — just do it
-- ❌ Never ask "需要我生成报告吗？" — already done
+
+### Sequential vs parallel — analyst must wait for researchers
+
+**Critical:** Agents spawned in the same round run in parallel and share NO context with each other.
+
+```
+❌ Wrong: spawn researcher-A + researcher-B + analyst all at once
+          → analyst has no data, returns empty
+
+✅ Right: 
+  Round 1: spawn researcher-A + researcher-B (parallel, independent)
+  Wait for both to return...
+  Round 2: main agent consolidates research results
+           → then either: main agent writes analysis itself
+           → or: spawn analyst with research results injected as context
+```
+
+**Rule: Any agent that depends on another agent's output MUST be spawned in a later round, after collecting the dependency.**
 
 ---
 
