@@ -9,7 +9,7 @@
 ## 安装
 
 ```bash
-npx --yes skills add https://github.com/你的账号/claw-multi-agent
+npx --yes skills add https://github.com/zcyynl/claw-multi-agent
 ```
 
 ## 快速上手
