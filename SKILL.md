@@ -31,6 +31,108 @@ Just say something like:
 
 ---
 
+## 🎭 Interaction Style — How to Talk to the User
+
+**This is mandatory.** Every multi-agent run must follow this interaction pattern:
+
+### Before spawning — announce the plan
+
+Always say what you're about to do BEFORE calling sessions_spawn. Format:
+
+```
+🚀 收到！我来组建一个 Agent 小队并行搞定这个任务。
+
+📋 任务规划：
+- 🔍 研究员A（GLM）— 调研 [主题A]
+- 🔍 研究员B（GLM）— 调研 [主题B]  
+- 📊 分析师（Kimi）— 对比分析 [维度]
+
+模式：🎯 指挥官模式（联网搜索）
+预计耗时：~60s（并行执行）
+
+正在派出 Agent 小队...
+```
+
+**Key rules:**
+- ✅ Always list each agent with: emoji + role + **model name** + task summary
+- ✅ State the mode (指挥官/流水线/混合) and why
+- ✅ Give a rough time estimate
+- ❌ Never silently call sessions_spawn without announcing
+
+### While waiting — brief note
+
+After spawning, say one line:
+```
+⏳ 子 Agent 已全部出发，等结果回来...
+```
+
+### After results — structured summary (not raw dump)
+
+**Never paste sub-agent raw output directly.** Always digest and present:
+
+```
+✅ 调研完成！3 个 Agent 并行，耗时约 XX 秒。
+
+## 📊 执行统计
+| Agent | 模型 | 耗时 | 状态 |
+|-------|------|------|------|
+| 🔍 研究员A | GLM | 58s | ✅ |
+| 🔍 研究员B | GLM | 62s | ✅ |
+| 📊 分析师  | Kimi | 45s | ✅ |
+串行需要约 165s → 并行实际 62s，节省 **62%** ⚡
+
+---
+
+[主 Agent 自己消化、整合后的报告内容]
+```
+
+**The main agent writes the report in its own words.** Sub-agent outputs are source material, not the final answer.
+
+---
+
+## 🤖 Model Selection Guide — Which Model for Which Role
+
+Always pick the right model for each agent. State the model explicitly in the announcement.
+
+### Model roster
+
+| 模型 | 别名 | 特点 | 适合角色 |
+|------|------|------|---------|
+| `glm` | GLM | 便宜、速度快、中文好 | 搜索、简单调研、状态检查 |
+| `kimi` | Kimi | 长上下文（128k）、代码强 | 深度分析、代码、长文整合 |
+| `gemini` | Gemini | 创意好、多模态 | 写作、文案、图像理解 |
+| `sonnet` | Claude Sonnet | 均衡、工具调用稳 | 复杂推理、规划、审核 |
+| `opus` | Claude Opus | 最强推理 | 极复杂分析、架构设计 |
+
+### Role → Model mapping (default)
+
+| 角色 | 默认模型 | 原因 |
+|------|---------|------|
+| 🔍 研究员 / Researcher | **GLM** | 轻量搜索，够用且便宜 |
+| 📊 分析师 / Analyst | **Kimi** | 长上下文，处理大量资料 |
+| ✍️ 写作者 / Writer | **Gemini** | 创意写作效果最好 |
+| 👨‍💻 程序员 / Coder | **Kimi** | 长上下文代码理解 |
+| 🔎 审核员 / Reviewer | **GLM** | 简单判断，不需重炮 |
+| 📋 规划师 / Planner | **Sonnet** | 结构化规划能力强 |
+| 🧐 批评者 / Critic | **Sonnet** | 逻辑严谨，挑战假设 |
+
+### When to override defaults
+
+- 任务很简单 → 降级到 GLM（省成本）
+- 需要最高质量 → 升级到 Opus
+- 用户明确指定模型 → 照用户说的来
+- 多模型对比场景 → 每个 Agent 用不同模型，在公告里说明
+
+### Always announce the model
+
+In the pre-spawn announcement, every agent line must include the model:
+```
+✅ 这样：🔍 研究员A（GLM）— 调研 LangChain
+❌ 这样：🔍 研究员A — 调研 LangChain
+```
+
+---
+
 ## Step 0: Always plan first (dynamic agent count)
 
 **Never hardcode how many agents to spawn.** The right number depends on the task complexity. Always start with a planning step:
