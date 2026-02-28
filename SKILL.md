@@ -1,259 +1,277 @@
 ---
 name: claw-multi-agent
-description: OpenClaw 多 Agent 并行编排系统，让 AI 像团队一样协作。支持并行调研、多模型对比、代码流水线等场景，实测节省 50-65% 时间。触发词：multi-agent、多个agent、并行执行、多模型对比、分发子任务、并行调研、指挥官模式、让多个AI同时。
+description: Multi-agent parallel orchestration for OpenClaw. Spawn AI agents as a team — parallel research, multi-model comparison, code pipelines. Proven 50-65% time savings. Trigger words: multi-agent, parallel agents, swarm, spawn multiple agents, parallel research, compare models.
 ---
 
 # claw-multi-agent 🐝
 
-> **用 AI 团队替代单个 AI，把串行变并行，把小时变分钟。**
+> **Replace one AI with a team of AIs. Turn serial into parallel. Turn hours into minutes.**
 
 ---
 
-## 能做什么？
+## What can it do?
 
-| 场景 | 例子 | 提速 |
-|------|------|------|
-| **并行调研** | 同时搜索 5 个技术框架，各自出报告 | ~65% ⚡ |
-| **多模型对比** | 让 Kimi、Claude、Gemini 同时回答同一问题 | ~50% ⚡ |
-| **代码流水线** | 规划 → 编码 → 审查，自动串行交接 | 质量↑ |
-| **批量处理** | 同时翻译/分析/总结多份文档 | 按数量倍增 |
-
----
-
-## ⚡ 30 秒上手
-
-说以下任何一句话就能触发：
-
-- "帮我并行调研 LangChain、CrewAI、AutoGen 三个框架"
-- "让 Kimi 和 Claude 同时回答这个问题，对比一下"
-- "用 swarm 模式帮我做这个调研"
-- "派多个 Agent 同时搜索这几个主题"
+| Scenario | Example | Speedup |
+|----------|---------|---------|
+| **Parallel research** | Search 5 frameworks simultaneously, each writes a report | ~65% ⚡ |
+| **Multi-model compare** | Ask Claude, Gemini, Kimi the same question at the same time | ~50% ⚡ |
+| **Code pipeline** | Plan → Code → Review, auto hand-off in sequence | Quality ↑ |
+| **Batch processing** | Translate / analyze / summarize multiple docs in parallel | Scales linearly |
 
 ---
 
-## 两种工作模式
+## ⚡ Get started in 30 seconds
 
-### 🎯 模式一：指挥官模式（有工具，能联网）
+Just say something like:
 
-子 Agent 拥有**联网搜索、读写文件、执行代码**等完整工具。
+- "Research LangChain, CrewAI, and AutoGen in parallel"
+- "Have multiple agents search these topics and write a combined report"
+- "Compare how Claude and Gemini answer this question"
+- "Use multi-agent mode to do this research"
 
-**适用**：需要真实搜索、文件操作、代码执行的任务。
+---
+
+## Two modes
+
+### 🎯 Mode 1: Orchestrator Mode (with tools, can browse the web)
+
+Sub-agents have full OpenClaw tools: **web search, file read/write, code execution**.
+
+**Use when**: tasks require real web search, file operations, or code execution.
 
 ```
-用户说：并行调研三个 AI 框架
+You say: research three AI frameworks in parallel
    ↓
-主 Agent（我）同时派出 3 个子 Agent
-   ├── 🔍 Agent-1 搜索 LangChain → 返回摘要
-   ├── 🔍 Agent-2 搜索 CrewAI   → 返回摘要  
-   └── 🔍 Agent-3 搜索 AutoGen  → 返回摘要
-         ↓（并行，约 25 秒）
-主 Agent 整合 → 写完整对比报告
+Main agent spawns 3 sub-agents simultaneously
+   ├── 🔍 Agent-1  searches LangChain → returns summary
+   ├── 🔍 Agent-2  searches CrewAI   → returns summary
+   └── 🔍 Agent-3  searches AutoGen  → returns summary
+         ↓ (parallel, ~25 seconds)
+Main agent consolidates → writes full comparison report
 ```
 
-**关键规则**（避坑）：
-- ✅ 子 Agent 只返回**搜索摘要**（100字以内每条）
-- ✅ 主 Agent 自己**写完整报告**
-- ❌ 不要让子 Agent 又搜索又写长文（token 上限会挂）
-- ❌ 每次 spawn 必须指定 model，否则走默认不可控
+**Key rules** (avoid common pitfalls):
+- ✅ Sub-agents return **short summaries only** (≤100 words each)
+- ✅ Main agent **writes the full report itself**
+- ❌ Don't ask a sub-agent to both search AND write a long report (token limit will cause failure)
+- ❌ Always specify `model` when calling `sessions_spawn`
 
-### 🔄 模式二：流水线模式（纯文本，真并行）
+### 🔄 Mode 2: Pipeline Mode (pure text, truly parallel)
 
-通过 Python CLI 调度多个模型，**无工具限制**，适合纯文本生成。
+Runs agents via Python CLI — **no tool dependency**, great for pure text generation.
 
-**适用**：写作、翻译、分析、多模型对比等不需要联网的任务。
+**Use when**: writing, translation, analysis, multi-model comparison without web access.
 
 ```bash
-cd /workspace/openclaw/skills/claw-swarm
+cd ~/.openclaw/skills/claw-multi-agent
 
-# 并行：3个模型同时回答
+# Parallel: 3 agents answer at the same time
 python run.py --mode parallel \
-  --agents "kimi:分析师:分析这个问题的技术层面" \
-           "gemini:写作者:用通俗语言解释这个问题" \
-           "claude:评论家:指出这个方案的潜在风险" \
+  --agents "fast:analyst:analyze the technical side of this problem" \
+           "fast:writer:explain this in plain language" \
+           "smart:critic:identify potential risks in this approach" \
   --aggregation compare
 
-# 串行：规划→执行→审核
+# Sequential: plan → implement → review
 python run.py --mode sequential \
-  --agents "glm:规划师:拆解任务" \
-           "kimi:开发者:实现代码" \
-           "claude:审核员:审查质量" \
+  --agents "fast:planner:break down the task" \
+           "smart:coder:implement the code" \
+           "fast:reviewer:review code quality" \
   --aggregation last
+
+# Auto-route: let the router pick the best tier automatically
+python run.py --auto-route --task "research LangChain and write a comparison report"
+
+# Dry-run: preview what would run without executing
+python run.py --dry-run \
+  --agents "fast:researcher:research LangChain" \
+           "smart:writer:write the report"
 ```
 
 ---
 
-## 选哪种模式？
+## Which mode to use?
 
 ```
-需要联网搜索？       → 指挥官模式
-需要读写文件？       → 指挥官模式
-需要执行代码？       → 指挥官模式
-纯文本生成/写作？    → 流水线模式
-多模型对比同一问题？  → 流水线模式
+Need web search?           → Orchestrator Mode (sessions_spawn)
+Need file read/write?      → Orchestrator Mode
+Need code execution?       → Orchestrator Mode
+Pure text / writing?       → Pipeline Mode (run.py)
+Multi-model comparison?    → Pipeline Mode
 ```
 
 ---
 
-## 模型选择指南
+## Smart Router
 
-| 任务类型 | 推荐模型 | 理由 |
-|----------|----------|------|
-| 联网搜索、整理摘要 | `glm` | 便宜够用，省成本 |
-| 代码编写/调试 | `kimi` | 长上下文，中文代码好 |
-| 写作、文档、创意 | `gemini` | 表达流畅，结构清晰 |
-| 深度分析、最终交付 | `claude` | 质量有保证 |
-| 极难推理、关键决策 | `opus` | 最强，但贵 |
+claw-multi-agent includes a built-in task router that automatically classifies tasks and picks the right tier:
 
-**成本优化原则**：搜索/初稿用 `glm`，最终输出用 `claude`，中间步骤按需选。
+```bash
+python scripts/router.py classify "research LangChain framework"
+# → Tier: RESEARCH, Confidence: 0.95
+
+python scripts/router.py spawn --json "write a Python web scraper"
+# → {"tier": "CODE", "model": null, ...}
+
+python scripts/router.py spawn --json --multi "research LangChain and write a report"
+# → [{"tier": "RESEARCH"}, {"tier": "CREATIVE"}]
+```
+
+| Tier | Triggers on | Example |
+|------|-------------|---------|
+| `FAST` | Simple queries, status checks, translation | "what is the weather?" |
+| `CODE` | Programming, debugging, scripts | "write a Python scraper" |
+| `RESEARCH` | Research, search, compare, survey | "research LangChain" |
+| `CREATIVE` | Writing, articles, documentation | "write a blog post" |
+| `REASONING` | Architecture, logic, complex analysis | "design a microservice system" |
 
 ---
 
-## 🔗 contextSharing：让子 Agent 知道背景
+## contextSharing: Give sub-agents context
 
-子 Agent 默认是全新会话，**不知道你的目标和背景**。通过在 task 中加 `【背景】` 段，让它们对齐。
+Sub-agents start as fresh sessions — they don't know your goal or background. Add a `[CONTEXT]` block to align them.
 
-### 三种方式
+### Three patterns
 
-**方式一：recent（推荐，95% 场景）**
-把背景压缩成 1-2 句话放在 task 开头：
-
-```
-【背景】用户在研究 AI Agent 框架选型，目标是写一篇对比报告给技术团队看。
-
-【你的任务】搜索 LangChain 的核心优缺点，返回 5 条摘要，每条 100 字以内。
-```
-
-**方式二：summary（串行场景）**
-把前序 Agent 的结论附在任务末尾，避免重复搜索：
+**Pattern 1: recent (recommended, covers 95% of cases)**
+Compress context into 1-2 sentences at the start of the task:
 
 ```
-【你的任务】在以下调研结论基础上，补充搜索 AutoGen 的资料：
+[CONTEXT] User is evaluating AI agent frameworks for a team comparison report. Target audience: engineers.
 
-【已有结论】
-- LangChain：生态最丰富，学习曲线陡
-- CrewAI：角色分工清晰，适合多 Agent...
-
-请返回 AutoGen 的 3 条独特亮点，与上面的结论不重复。
+[YOUR TASK] Search LangChain's core pros and cons. Return 5 bullet points, each under 100 words.
 ```
 
-**方式三：full（上下文复杂时）**
-让子 Agent 自己读文件：
+**Pattern 2: summary (for sequential tasks)**
+Attach prior agents' findings to avoid duplicate work:
 
 ```
-【背景文件】请先读 /workspace/research/context.md 了解整体方向。
+[YOUR TASK] Based on the findings below, supplement with research on AutoGen:
 
-【你的任务】基于背景，搜索最新的 Test-Time Compute Scaling 进展，返回 3 条摘要。
+[PRIOR FINDINGS]
+- LangChain: richest ecosystem, steep learning curve
+- CrewAI: clean role separation, great for multi-agent...
+
+Return 3 unique highlights about AutoGen not covered above.
 ```
 
-### 并行调研标准模板
+**Pattern 3: full (for complex background)**
+Let the sub-agent read a file directly:
+
+```
+[CONTEXT FILE] Read /workspace/research/context.md for overall direction.
+
+[YOUR TASK] Search latest Test-Time Compute Scaling advances. Return 3 summaries.
+```
+
+### Parallel research template
 
 ```python
-# 一次写好背景，复用给所有子 Agent
-BG = "用户研究 RL 训练技术，目标写对比报告给算法工程师。关注：GRPO/DAPO/PPO 对比、veRL 框架。"
+# Write context once, reuse across all sub-agents
+BG = "User researches RL post-training. Goal: comparison report for ML engineers. Topics: GRPO/DAPO/PPO, veRL."
 
-sessions_spawn({"task": f"【背景】{BG}\n\n【任务】搜索 GRPO vs PPO 最新对比数据，返回 5 条摘要，每条 100 字以内。", "model": "glm", "label": "s1"})
-sessions_spawn({"task": f"【背景】{BG}\n\n【任务】搜索 DAPO 算法原理和适用场景，返回 5 条摘要，每条 100 字以内。", "model": "glm", "label": "s2"})
-sessions_spawn({"task": f"【背景】{BG}\n\n【任务】搜索 veRL 框架架构和性能数据，返回 5 条摘要，每条 100 字以内。", "model": "glm", "label": "s3"})
-# 收到全部结果后，主 Agent 自己整合写完整报告
+sessions_spawn({"task": f"[CONTEXT] {BG}\n\n[TASK] Search GRPO vs PPO latest benchmarks. Return 5 bullet points, each under 100 words.", "model": "glm", "label": "s1"})
+sessions_spawn({"task": f"[CONTEXT] {BG}\n\n[TASK] Search DAPO algorithm design and use cases. Return 5 bullet points.", "model": "glm", "label": "s2"})
+sessions_spawn({"task": f"[CONTEXT] {BG}\n\n[TASK] Search veRL framework architecture and performance. Return 5 bullet points.", "model": "glm", "label": "s3"})
+# After all results return, main agent consolidates and writes the full report
 ```
 
 ---
 
-## 预设角色
+## Preset roles
 
-| 角色 | Emoji | 默认模型 | 擅长 |
-|------|-------|----------|------|
-| `researcher` | 🔍 | glm | 联网搜索、信息整理 |
-| `writer` | ✍️ | gemini | 报告写作、文档整理 |
-| `coder` | 👨‍💻 | kimi | 代码编写、调试 |
-| `analyst` | 📊 | kimi | 数据分析、统计 |
-| `reviewer` | 🔎 | glm | 代码/内容审查 |
-| `planner` | 📋 | glm | 任务规划、需求拆解 |
+| Role | Emoji | Best for |
+|------|-------|---------|
+| `researcher` | 🔍 | Web search, info gathering |
+| `writer` | ✍️ | Reports, documentation |
+| `coder` | 👨‍💻 | Code writing, debugging |
+| `analyst` | 📊 | Data analysis, statistics |
+| `reviewer` | 🔎 | Code / content review |
+| `planner` | 📋 | Task planning, decomposition |
 
 ---
 
-## 完整案例：技术调研报告
+## Full example: Technical research report
 
-### 第一步：并行搜索（指挥官模式，~25秒）
+### Step 1: Parallel search (Orchestrator Mode, ~25s)
 
 ```python
-sessions_spawn({"task": "搜索 FastAPI 框架特点、性能数据，返回 5 条摘要，每条 80 字内。", "model": "glm", "label": "r1"})
-sessions_spawn({"task": "搜索 Django 框架特点、适用场景，返回 5 条摘要，每条 80 字内。", "model": "glm", "label": "r2"})
-sessions_spawn({"task": "搜索 Flask 框架特点、典型案例，返回 5 条摘要，每条 80 字内。", "model": "glm", "label": "r3"})
+sessions_spawn({"task": "Search FastAPI framework features and benchmarks. Return 5 bullet points under 80 words each.", "label": "r1"})
+sessions_spawn({"task": "Search Django framework features and use cases. Return 5 bullet points under 80 words each.", "label": "r2"})
+sessions_spawn({"task": "Search Flask framework features and real-world examples. Return 5 bullet points under 80 words each.", "label": "r3"})
 ```
 
-### 第二步：主 Agent 整合写报告
+### Step 2: Main agent consolidates and writes
 
-收到三个 Agent 的摘要后，主 Agent 直接调用 write 工具写完整报告（不再派发子 Agent）。
+Once all three agents report back, the main agent uses the `write` tool to produce the full report — no sub-agent involved.
 
-### 第三步（可选）：推送飞书文档
-
-配合 `feishu-all-operations` skill，一行代码推送到飞书。
-
-**实测数据**：3 个主题串行需要 ~75 秒，并行只需 ~25 秒，**节省 67%** ⚡
+**Benchmark**: 3 topics serially takes ~75s, in parallel ~25s — **67% faster** ⚡
 
 ---
 
-## 执行完成后的统计输出
+## Execution summary output
 
-每次任务完成，输出标准统计卡：
+After every multi-agent run, print a standard summary:
 
 ```
-## 📊 执行统计
+## 📊 Execution Summary
 
-| Agent | 任务 | 模型 | 耗时 | 状态 |
-|-------|------|------|------|------|
-| 🔍 r1 | FastAPI 搜索 | glm | 22s | ✅ |
-| 🔍 r2 | Django 搜索  | glm | 24s | ✅ |
-| 🔍 r3 | Flask 搜索   | glm | 21s | ✅ |
-| ✍️ 主 | 整合写报告   | claude | 35s | ✅ |
+| Agent | Task | Model | Time | Status |
+|-------|------|-------|------|--------|
+| 🔍 r1 | FastAPI search | default | 22s | ✅ |
+| 🔍 r2 | Django search  | default | 24s | ✅ |
+| 🔍 r3 | Flask search   | default | 21s | ✅ |
+| ✍️ main | Write report | default | 35s | ✅ |
 
-并行节省：~50s | 总耗时：~60s（vs 串行 ~110s）
+Parallel saving: ~50s | Total: ~60s (vs serial ~110s)
 ```
 
 ---
 
-## ⚠️ 避坑指南（实战血泪总结）
+## ⚠️ Gotchas (learned the hard way)
 
-### 坑①：子 Agent 写大文件必挂
-子 Agent 单次输出约 **4096 token 上限**，超出后工具调用截断，写文件死循环。
+### Gotcha 1: Sub-agent output token limit
+Sub-agents have a ~4096 token output cap. If exceeded, tool call arguments get truncated to `{}` and file writes silently fail.
 
-- ❌ task 里让子 Agent「搜索 + 写 2000 字报告」
-- ✅ 子 Agent 只返回摘要，**主 Agent 自己写报告**
+- ❌ Task: "search AND write a 2000-word report"
+- ✅ Sub-agent returns summaries only; **main agent writes the report**
 
-### 坑②：忘传 model 参数
-不传 model = 走 session 默认模型 = 不可控、成本不符预期。
+### Gotcha 2: Missing model parameter
+Without `model`, `sessions_spawn` uses the session default — unpredictable and potentially expensive.
 
 - ❌ `sessions_spawn({"task": "...", "label": "x"})`
 - ✅ `sessions_spawn({"task": "...", "model": "glm", "label": "x"})`
 
-### 坑③：流水线模式里用联网工具
-`python run.py` 的子进程**没有** web_search、exec 等工具，纯文本只。
+### Gotcha 3: Using web tools in Pipeline Mode
+`python run.py` sub-processes have **no** OpenClaw tools (no `web_search`, `exec`, etc.).
 
-- ❌ 流水线模式里要求搜索最新信息
-- ✅ 联网任务 → 指挥官模式（sessions_spawn）
+- ❌ Pipeline mode: "search the latest news on X"
+- ✅ Anything needing tools → use Orchestrator Mode
 
-### 坑④：并行任务互相依赖
-同一批 spawn 的任务是并行的，**不能让 A 等待 B 的输出**。
+### Gotcha 4: Parallel tasks depending on each other
+Agents spawned in the same round run simultaneously — they can't wait for each other.
 
-- ❌ Agent-2 的 task 里说「基于 Agent-1 的结果继续」
-- ✅ 并行任务各自独立，主 Agent 收齐后再整合
+- ❌ Agent-2 task says "based on Agent-1's results..."
+- ✅ Parallel agents work independently; main agent consolidates after all return
 
 ---
 
-## 流水线模式参数速查
+## Pipeline mode quick reference
 
 ```bash
 python run.py
-  --mode parallel|sequential   # 并行或串行
-  --agents "model:role:task"   # 可重复多次
-  --aggregation synthesize|concatenate|compare|last
-  --timeout 300                # 超时秒数
+  --mode parallel|sequential       # run agents in parallel or serial
+  --agents "tier:role:task"        # repeatable; tier = fast|smart|best or custom model
+  --aggregation synthesize|compare|concatenate|last
+  --timeout 300                    # seconds before giving up
+  --dry-run                        # preview without executing
+  --auto-route                     # let router classify and split task automatically
+  --list-models                    # show current model config
 ```
 
-| aggregation | 效果 |
-|-------------|------|
-| `synthesize` | 主 Agent 汇总整理（默认） |
-| `compare` | 并排对比各模型输出 |
-| `concatenate` | 顺序拼接 |
-| `last` | 只取最后一个结果（串行用） |
+| Aggregation | Effect |
+|-------------|--------|
+| `synthesize` | Main agent summarizes all outputs (default) |
+| `compare` | Side-by-side comparison of each agent's output |
+| `concatenate` | Outputs joined in order |
+| `last` | Only the final agent's output (use with sequential) |

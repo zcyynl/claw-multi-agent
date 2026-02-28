@@ -1,67 +1,92 @@
 # claw-multi-agent 🐝
 
-> OpenClaw 多 Agent 并行编排 Skill — 让 AI 像团队一样协作
+> OpenClaw skill for multi-agent parallel orchestration — run AI agents as a team
 
-用多个 AI Agent 同时工作，把串行变并行，**实测节省 50-65% 时间**。
+Spawn multiple AI agents simultaneously, turn serial into parallel. **Proven 50–65% time savings.**
 
-自动使用你 OpenClaw 里已有的模型，**零配置，装完即用**。
+Uses your existing OpenClaw models — **zero config, works out of the box.**
 
-## 安装
+## Install
 
 ```bash
 npx --yes skills add https://github.com/zcyynl/claw-multi-agent
 ```
 
-## 快速上手
+## Quick start
 
-安装后直接对 OpenClaw 说：
+After installing, just tell OpenClaw:
 
-- "帮我并行调研 LangChain、CrewAI、AutoGen 三个框架"
-- "让多个 Agent 同时搜索这几个主题，然后整合报告"
-- "用 multi-agent 模式对比几个模型的回答"
+- "Research LangChain, CrewAI, and AutoGen in parallel"
+- "Spawn multiple agents to search these topics and combine the results"
+- "Compare how different models answer this question"
+- "Use multi-agent mode to do this research task"
 
-## 两种工作模式
+## Two modes
 
-### 🎯 指挥官模式（有工具，能联网）
+### 🎯 Orchestrator Mode (tools + web search)
 
-主 Agent 派发子 Agent，子 Agent 拥有**联网搜索、读写文件、执行代码**等完整工具。
+Main agent spawns sub-agents via `sessions_spawn`. Each sub-agent has full OpenClaw tools: web search, file I/O, code execution.
 
 ```
-你说：并行调研三个 AI 框架
+You: research three AI frameworks in parallel
   ↓
-主 Agent 同时派出 3 个子 Agent
-  ├── 🔍 Agent-1 搜索 LangChain → 返回摘要
-  ├── 🔍 Agent-2 搜索 CrewAI   → 返回摘要
-  └── 🔍 Agent-3 搜索 AutoGen  → 返回摘要
-        ↓ 并行执行，约 25 秒
-主 Agent 整合 → 写完整对比报告
+Main agent spawns 3 sub-agents simultaneously
+  ├── 🔍 Agent-1  LangChain → summary
+  ├── 🔍 Agent-2  CrewAI    → summary
+  └── 🔍 Agent-3  AutoGen   → summary
+        ↓ ~25 seconds (parallel)
+Main agent consolidates → full comparison report
 ```
 
-适合：需要联网搜索、文件操作、代码执行的任务。
-
-### 🔄 流水线模式（纯文本，真并行）
+### 🔄 Pipeline Mode (pure text, truly parallel)
 
 ```bash
 cd ~/.openclaw/skills/claw-multi-agent
+
+# Parallel comparison
 python run.py --mode parallel \
-  --agents "fast:研究员:调研LangChain的优缺点" \
-           "fast:研究员:调研CrewAI的优缺点" \
-           "smart:写作者:整合以上调研写对比报告" \
+  --agents "fast:researcher:research LangChain pros and cons" \
+           "fast:researcher:research CrewAI pros and cons" \
+           "smart:writer:write a comparison report" \
   --aggregation synthesize
+
+# Auto-route: router picks tiers automatically
+python run.py --auto-route --task "research LangChain and write a report"
+
+# Preview without running
+python run.py --dry-run --agents "fast:researcher:research X" "smart:writer:write report"
 ```
 
-适合：纯文本生成、多模型对比、写作分析。
+## Smart Router
 
-## 实测性能
+Built-in task classifier — automatically picks the right agent tier:
 
-| 场景 | 串行 | 并行 | 节省 |
-|------|------|------|------|
-| 3 个主题同时调研 | ~75s | ~25s | **67%** ⚡ |
-| 3 个模型对比回答 | ~63s | ~22s | **65%** ⚡ |
+```bash
+python scripts/router.py classify "write a Python scraper"
+# → Tier: CODE
 
-## 详细文档
+python scripts/router.py classify "research LangChain framework"
+# → Tier: RESEARCH
+```
 
-完整使用指南见 [SKILL.md](./SKILL.md)，包含：
-- contextSharing：给子 Agent 注入背景上下文
-- 避坑指南（实战踩坑总结）
-- 完整示例
+| Tier | Used for |
+|------|---------|
+| `FAST` | Simple queries, status, translation |
+| `CODE` | Programming, debugging, implementation |
+| `RESEARCH` | Research, search, compare, survey |
+| `CREATIVE` | Writing, articles, documentation |
+| `REASONING` | Architecture, logic, complex analysis |
+
+## Benchmarks
+
+| Scenario | Serial | Parallel | Saved |
+|----------|--------|----------|-------|
+| 3 topics researched simultaneously | ~75s | ~25s | **67%** ⚡ |
+| 3 models answering same question | ~63s | ~22s | **65%** ⚡ |
+
+## Full docs
+
+See [SKILL.md](./SKILL.md) for:
+- contextSharing: inject background into sub-agents
+- Gotchas & lessons learned
+- Complete examples

@@ -1,7 +1,7 @@
 {
   "name": "claw-multi-agent",
   "version": "1.0.0",
-  "description": "OpenClaw multi-agent orchestration skill — run AI agents in parallel, like a team",
+  "description": "OpenClaw skill for multi-agent parallel orchestration. Spawn AI agents as a team — parallel research, multi-model comparison, code pipelines. Zero config, works out of the box.",
   "keywords": ["openclaw", "skill", "multi-agent", "parallel", "orchestration", "swarm"],
   "author": "",
   "license": "MIT",
