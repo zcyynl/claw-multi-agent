@@ -1,7 +1,7 @@
 {
   "name": "claw-multi-agent",
   "version": "1.0.0",
-  "description": "Spawn a team of AI agents that collaborate on complex tasks. Each agent runs in an isolated session — role specialization means better coverage, separate contexts mean lower token cost. Commander mode (with web search & tools) + Pipeline mode (pure text). Zero config.",
+  "description": "Spawn a team of AI agents that collaborate on complex tasks. Each agent runs in a clean, isolated session — no shared context pollution, lower token cost, better focus. Role specialization gives broader coverage. Commander mode (web search + tools) + Pipeline mode. Zero config.",
   "keywords": ["openclaw", "skill", "multi-agent", "swarm", "orchestration", "parallel", "token-efficient", "research", "pipeline"],
   "author": "",
   "license": "MIT",
