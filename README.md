@@ -1,6 +1,6 @@
 # claw-multi-agent 🐝
 
-**OpenClaw 多智能体编排 Skill**
+**OpenClaw 多智能体协同 Skill**
 
 单个 AI 视角单一、上下文越跑越重。claw-multi-agent 让你组建一支 AI 小队——不同角色、不同模型、各司其职，协作完成复杂任务。
 
