@@ -1,7 +1,7 @@
 {
   "name": "claw-multi-agent",
   "version": "1.0.0",
-  "description": "Multi-agent collaboration for complex tasks — natively built on OpenClaw's sessions_spawn. Each sub-agent runs in an isolated session (no context pollution, lower token cost). Built-in context injection keeps agents aligned without bloating their context. Zero config, zero extra dependencies.",
+  "description": "Claw Multi Agent enables parallel multi-agent orchestration for comprehensive research, model comparison, and code pipelines. Each agent runs in an isolated session — built-in context injection keeps the team aligned without the token overhead.",
   "keywords": ["openclaw", "skill", "multi-agent", "swarm", "orchestration", "parallel", "token-efficient", "research", "pipeline"],
   "author": "",
   "license": "MIT",
