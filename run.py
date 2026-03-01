@@ -26,6 +26,11 @@ def parse_agent_str(s: str) -> AgentTask:
     """
     解析 agent 字符串：格式为 "model:role:task"
     例如：kimi:研究员:调研LangChain框架
+
+    Security note: The --agents CLI arguments are intended to be composed by the
+    main OpenClaw agent or the user directly in a trusted terminal context.
+    This is a pipeline/batch runner tool, not a web-facing service.
+    Input is passed to sub-agents within the same OpenClaw session boundary.
     """
     parts = s.split(":", 2)
     if len(parts) == 1:

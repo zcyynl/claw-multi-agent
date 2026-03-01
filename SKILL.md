@@ -33,7 +33,7 @@ Just say something like:
 
 ## 🎭 Interaction Style — How to Talk to the User
 
-**This is mandatory.** Every multi-agent run must follow this interaction pattern.
+This is the recommended pattern. Every multi-agent run must follow this interaction pattern.
 
 ### Step 0 — Announce skill activation FIRST
 
@@ -97,7 +97,7 @@ After spawning, say one line:
 
 **Never paste sub-agent raw output directly.** Always digest and restructure by content logic — NOT by agent order.
 
-**Output order (mandatory):**
+**Recommended output order:**
 
 ```
 1. 执行统计卡 ← 先让用户知道跑了什么
@@ -199,7 +199,7 @@ message(action="send", message=report_content)
            → or: spawn analyst with research results injected as context
 ```
 
-**Rule: Any agent that depends on another agent's output MUST be spawned in a later round, after collecting the dependency.**
+**Best practice: Any agent that depends on another agent's output should be spawned in a later round, after collecting the dependency.**
 
 ---
 
