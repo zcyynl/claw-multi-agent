@@ -91,6 +91,23 @@ python run.py --mode hybrid --task "调研主流 AI 框架，给我3个不同风
 
 ---
 
+## OpenClaw 原生 vs claw-multi-agent
+
+OpenClaw 原生只有 `sessions_spawn`，一次派一个 Agent，等完成再派下一个。
+
+claw-multi-agent 加了什么：
+
+| 能力 | 原生 | claw-multi-agent |
+|------|------|-----------------|
+| 派子 Agent | ✅ 串行 | ✅ **真并行** |
+| 联网搜索 | ✅ | ✅ |
+| 结果自动聚合 | ❌ | ✅ |
+| 自动路由 | ❌ | ✅ |
+| 无工具轻量 Agent | ❌ | ✅ 流水线模式 |
+| 多版草稿对比 | ❌ | ✅ 混合模式 |
+
+---
+
 ## 自动路由
 
 不用说"用哪个模式"，skill 识别两个信号自动判断：
@@ -115,22 +132,6 @@ python run.py --mode hybrid --task "调研主流 AI 框架，给我3个不同风
 
 ---
 
-## OpenClaw 原生 vs claw-multi-agent
-
-OpenClaw 原生只有 `sessions_spawn`，一次派一个 Agent，等完成再派下一个。
-
-claw-multi-agent 加了什么：
-
-| 能力 | 原生 | claw-multi-agent |
-|------|------|-----------------|
-| 派子 Agent | ✅ 串行 | ✅ **真并行** |
-| 联网搜索 | ✅ | ✅ |
-| 结果自动聚合 | ❌ | ✅ |
-| 自动路由 | ❌ | ✅ |
-| 无工具轻量 Agent | ❌ | ✅ 流水线模式 |
-| 多版草稿对比 | ❌ | ✅ 混合模式 |
-
----
 
 ## 详细文档
 
