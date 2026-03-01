@@ -37,6 +37,12 @@ Just say something like:
 
 ### Step 0 — Announce skill activation FIRST
 
+**⚠️ Iron rule: The activation announcement must be your FIRST reply after receiving the task — before reading any files, before investigating, before spawning.**
+
+**Why this matters**: Reading files, researching background, and spawning all take time. If you do those first, users see long silence. Worse: context compression can happen during that time, and the announcement will never be sent.
+
+**Correct order**: Receive task → Send announcement immediately → Then read files / spawn / wait
+
 The very first thing to say when this skill is triggered — before any planning or spawning:
 
 ```
@@ -558,6 +564,12 @@ Agents spawned: 4  |  Parallel time: ~24s  |  Serial equivalent: ~86s  |  Saved:
 ---
 
 ## ⚠️ Gotchas
+
+### Gotcha 0: Reading files before announcing (most common mistake)
+Investigating context before sending the activation announcement causes long silence and risks losing the announcement entirely due to context compression.
+
+- ❌ Receive task → read operators.py → read README → announce → spawn
+- ✅ Receive task → **announce immediately** (can say "analyzing task...") → read files → spawn
 
 ### Gotcha 1: Sub-agent output token limit
 Sub-agents have a ~4096 token output cap. Exceeded → tool args truncated → file writes silently fail.
