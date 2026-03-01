@@ -75,7 +75,7 @@ Right after the activation announcement, present the plan BEFORE calling session
 | Researcher | 🔍 | 🔍 研究员A（GLM）— Research XX |
 | Analyst | 📊 | 📊 分析师（Kimi）— Deep comparison |
 | Writer | ✍️ | ✍️ 写作者（Gemini）— Draft the report |
-| Coder | 👨‍💻 | 👨‍💻 程序员（Kimi）— Implement the logic |
+| Coder | 💻 | 💻 程序员（Kimi）— Implement the logic |
 | Reviewer | 🔎 | 🔎 审核员（GLM）— Quality check |
 | Planner | 📋 | 📋 规划师（Sonnet）— Break down tasks |
 
@@ -224,7 +224,7 @@ Always pick the right model for each agent. State the model explicitly in the an
 | 🔍 研究员 / Researcher | **GLM** | 轻量搜索，够用且便宜 |
 | 📊 分析师 / Analyst | **Kimi** | 长上下文，处理大量资料 |
 | ✍️ 写作者 / Writer | **Gemini** | 创意写作效果最好 |
-| 👨‍💻 程序员 / Coder | **Kimi** | 长上下文代码理解 |
+| 💻 程序员 / Coder | **Kimi** | 长上下文代码理解 |
 | 🔎 审核员 / Reviewer | **GLM** | 简单判断，不需重炮 |
 | 📋 规划师 / Planner | **Sonnet** | 结构化规划能力强 |
 | 🧐 批评者 / Critic | **Sonnet** | 逻辑严谨，挑战假设 |
@@ -394,7 +394,7 @@ python run.py --mode parallel \
 # Sequential: chain agents, each builds on the previous output
 python run.py --mode sequential \
   --agents "fast:📋 planner:break down how to build a REST API in Python" \
-           "smart:👨‍💻 coder:implement the API based on the plan above" \
+           "smart:💻 coder:implement the API based on the plan above" \
            "fast:🔎 reviewer:review the code for bugs and security issues" \
   --aggregation last
 
@@ -555,7 +555,7 @@ Agents spawned: 4  |  Parallel time: ~24s  |  Serial equivalent: ~86s  |  Saved:
 |------|-------|---------|
 | `researcher` | 🔍 | Web search, info gathering |
 | `writer` | ✍️ | Reports, documentation, articles |
-| `coder` | 👨‍💻 | Code writing, debugging, implementation |
+| `coder` | 💻 | Code writing, debugging, implementation |
 | `analyst` | 📊 | Data analysis, comparison, statistics |
 | `reviewer` | 🔎 | Code / content review, QA |
 | `planner` | 📋 | Task planning, decomposition |
