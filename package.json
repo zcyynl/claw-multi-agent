@@ -1,8 +1,8 @@
 {
   "name": "claw-multi-agent",
   "version": "1.0.0",
-  "description": "组建 AI 小队协作完成复杂任务。多角色分工更全面，独立会话省 token，并行执行省时间。支持指挥官/流水线/混合三种模式，零配置开箱即用。",
-  "keywords": ["openclaw", "skill", "multi-agent", "parallel", "orchestration", "research", "pipeline"],
+  "description": "Spawn a team of AI agents that collaborate on complex tasks. Each agent runs in an isolated session — role specialization means better coverage, separate contexts mean lower token cost. Commander mode (with web search & tools) + Pipeline mode (pure text). Zero config.",
+  "keywords": ["openclaw", "skill", "multi-agent", "swarm", "orchestration", "parallel", "token-efficient", "research", "pipeline"],
   "author": "",
   "license": "MIT",
   "openclaw": {
