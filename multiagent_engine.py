@@ -5,6 +5,16 @@ OpenClaw Native Multi-Agent Engine
 通过 OpenClaw CLI 实现真正的多 Agent 并行编排
 
 不需要任何 API key，直接复用 OpenClaw 内部模型路由。
+
+Security Design Notes:
+- This engine is a pipeline mode runner for the claw-multi-agent skill.
+- Task descriptions are composed by the main OpenClaw agent (not raw user input),
+  which is itself sandboxed by OpenClaw's permission model.
+- Sub-agents run within the same OpenClaw session context and inherit the same
+  permission boundaries as the main agent.
+- The {file_path} placeholder in templates should always be a project-relative path.
+  It is the responsibility of the orchestrating agent to validate paths before use.
+- This skill does not introduce new attack surface beyond what OpenClaw already permits.
 """
 
 import subprocess
