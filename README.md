@@ -12,6 +12,12 @@
 
 ## 安装
 
+**方式一：通过 ClawHub（推荐）**
+```bash
+npx clawhub@latest install claw-multi-agent
+```
+
+**方式二：通过 GitHub**
 ```bash
 npx --yes skills add https://github.com/zcyynl/claw-multi-agent
 ```
