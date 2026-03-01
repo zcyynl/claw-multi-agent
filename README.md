@@ -1,8 +1,6 @@
 # claw-multi-agent 🐝
 
-**OpenClaw 多智能体编排 Skill**
-
-单个 AI 视角单一、上下文越跑越重。claw-multi-agent 让你组建一支 AI 小队——不同角色、不同模型、各司其职，协作完成复杂任务。
+**Parallel multi-agent orchestration for OpenClaw — comprehensive research, model comparison, and code pipelines. Each agent runs in an isolated session with built-in context injection, keeping the team aligned without the token overhead.**
 
 - 🎯 **多样性**：研究员搜索、分析师推理、写作者输出，分工比单打独斗更全面
 - 💰 **省 token**：每个子 Agent 独立会话，只返回摘要，主线程上下文不膨胀
