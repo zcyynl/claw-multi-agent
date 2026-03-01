@@ -24,10 +24,10 @@ npx --yes skills add https://github.com/zcyynl/claw-multi-agent
 
 安装后直接说：
 
-- "帮我并行调研 LangChain、CrewAI、AutoGen 三个框架"
-- "深度调研一下 XXX，整理成报告"
-- "让多个 AI 同时写这篇文案，我挑最好的"
-- "全面分析一下这几个方案的优缺点"
+- "多智能体做 xxx"
+- "帮我并行调研 LangChain、CrewAI、AutoGen 框架"
+- "深度调研一下 xxx，整理成报告"
+- "全面分析一下 xxx 的优缺点"
 
 不需要指定模式，skill 自动判断该用哪种。
 
